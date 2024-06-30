@@ -1,0 +1,103 @@
+version: '3.8'
+
+services:
+  ap-microservice-a:
+    image: postgres:16.3
+    container_name: ap-akogare-platform-microservice-a
+    hostname: ap-akogare-platform-microservice-a
+    ports:
+      - "5435:5432"
+    environment:
+      POSTGRES_USER: ${PDF_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${PDF_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${PDF_POSTGRES_DB}
+    volumes:
+      - microservicedb:/var/lib/postgresql/data
+    networks:
+      - akogare-platform-internal-network
+
+      #Keycloak
+  ap-keycloakdb:
+    image: postgres:16.3
+    container_name: ap-keycloakdb
+    hostname: akogare-platform-keycloakdb
+    volumes:
+      - postgres_keycloak_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${KC_POSTGRES_DB}
+      POSTGRES_USER: ${KC_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${KC_POSTGRES_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "pg_isready", "-q", "-d", "${KC_POSTGRES_DB}", "-U", "${KC_POSTGRES_USER}" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    networks:
+      - akogare-platform-internal-network
+
+  ap-keycloak:
+    container_name: ap-keycloak
+    hostname: ap-keycloak
+    image: quay.io/keycloak/keycloak:24.0.4
+    environment:
+      KEYCLOAK_DATABASE_VENDOR: POSTGRES
+      KEYCLOAK_DATABASE_HOST: akogare-platform-keycloakdb
+      KEYCLOAK_DATABASE_PORT: 5432
+      KEYCLOAK_DATABASE_NAME: ${KC_POSTGRES_DB}
+      KEYCLOAK_DATABASE_USER: ${KC_POSTGRES_USER}
+      KEYCLOAK_DATABASE_PASSWORD: ${KC_POSTGRES_PASSWORD}
+      KEYCLOAK_DATABASE_SCHEMA: public
+      KEYCLOAK_ADMIN: ${KEYCLOAK_USER}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_PASSWORD}
+      KEYCLOAK_ENABLE_HEALTH_ENDPOINTS: 'true'
+      KEYCLOAK_ENABLE_STATISTICS: 'true'
+      KC_HOSTNAME: ${KEYCLOAK_HOSTNAME}
+      #KC_PROXY: edge
+      KC_PROXY_ADDRESS_FORWARDING: 'true'
+      KC_HOSTNAME_STRICT_HTTPS: 'false'
+      KC_HTTP_ENABLED: 'true'
+    volumes:
+      - keycloak_data:/var/lib/keycloak/data
+    command: [ 'start', '--optimized', '--http-port=8089', '--hostname-debug=true', '--hostname-strict=false' ]
+    networks:
+      - akogare-platform-internal-network
+    ports:
+      - "8089:8089"
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/8089' || exit 1
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 90s
+    restart: always
+    depends_on:
+      ap-keycloakdb:
+        condition: service_healthy
+
+  ap-rabbitmq:
+    image: rabbitmq:3.13.3-management
+    hostname: ap-rabbitmq
+    restart: always
+    container_name: ap-rabbitmq
+    environment:
+      RABBITMQ_DEFAULT_USER: ${RABBITMQ_USER}
+      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_PASSWORD}
+    volumes:
+      - pdf_rabbitmq_volume:/var/lib/rabbitmq
+    ports:
+      - 5673:5672
+      - 15673:15672
+networks:
+  akogare-platform-internal-network:
+    driver: bridge
+
+volumes:
+  postgres_keycloak_data:
+    driver: local
+  microservicedb:
+    driver: local
+  pdf_rabbitmq_volume:
+    driver: local
+  keycloak_data:
+    driver: local
