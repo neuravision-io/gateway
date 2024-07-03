@@ -21,7 +21,6 @@ public class Routes {
                 .route("echo-webservice", r -> r.path("/api/echo-webservice/**")
                         .filters(f -> f.addResponseHeader("X-Response-Time", LocalDateTime.now().toString())
                                 .filter((exchange, chain) -> {
-                                    logRequestHeaders(exchange);
                                     return chain.filter(exchange);
                                 })
                         )
@@ -35,10 +34,5 @@ public class Routes {
                 .build();
     }
 
-    private void logRequestHeaders(ServerWebExchange exchange) {
-        exchange.getRequest().getHeaders().forEach((name, values) -> {
-            values.forEach(value -> logger.info("Header: {} = {}", name, value));
-        });
-    }
 
 }
