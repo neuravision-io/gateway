@@ -38,7 +38,8 @@ public class SecurityConfig {
             "/webjars/**",
             "/favicon.ico",
             "/aggregate/**",
-            "/ws/**"
+            "/ws/**",
+            "actuator/health"
     };
 
 
@@ -76,10 +77,6 @@ public class SecurityConfig {
         JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
         jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(new KeycloakRoleConverter());
         return new ReactiveJwtAuthenticationConverterAdapter(jwtAuthenticationConverter);
-    }
-    @Bean
-    public ForwardedHeaderTransformer forwardedHeaderTransformer() {
-        return new ForwardedHeaderTransformer();
     }
 
 }
