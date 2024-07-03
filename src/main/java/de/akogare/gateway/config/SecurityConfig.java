@@ -49,7 +49,6 @@ public class SecurityConfig {
                 .csrf(csrfSpec -> csrfSpec.disable())
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(freeResourceUrls).permitAll()
-                        .pathMatchers(HttpMethod.OPTIONS).permitAll()
                         .pathMatchers("*").permitAll()
                         .pathMatchers("/api/echo-webservice/user").hasRole("USER")
                         .pathMatchers("/api/echo-webservice/admin").hasRole("ADMIN")
@@ -63,7 +62,7 @@ public class SecurityConfig {
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         final CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:8080"));
+        configuration.setAllowedOrigins(List.of("http://localhost:4200", "http://localhost:8080", "https://platform.akogare.de"));
         configuration.setAllowedMethods(List.of("GET", "PUT", "DELETE", "POST", "PATCH", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setExposedHeaders(List.of("*"));
