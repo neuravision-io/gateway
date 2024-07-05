@@ -50,8 +50,9 @@ public class SecurityConfig {
                 .authorizeExchange(exchange -> exchange
                         .pathMatchers(freeResourceUrls).permitAll()
                         .pathMatchers("*").permitAll()
-                        .pathMatchers("/api/echo-webservice/user").hasRole("USER")
-                        .pathMatchers("/api/echo-webservice/admin").hasRole("ADMIN")
+                        .pathMatchers("/api/v1/echo-webservice/user").hasRole("USER")
+                        .pathMatchers("/api/v1/echo-webservice/admin").hasRole("ADMIN")
+                        .pathMatchers("/api/v1/user-webservice/**").hasRole("USER")
                         .anyExchange().authenticated())
                 .oauth2ResourceServer(oauth2ResourceServerSpec ->
                         oauth2ResourceServerSpec.jwt(jwtSpec -> jwtSpec.jwtAuthenticationConverter(getJwtAuthenticationConverter())));

@@ -1,6 +1,20 @@
 version: '3.8'
 
 services:
+  ap-user-microservice:
+    image: postgres:16.3
+    container_name: ap-user-microservice
+    hostname: ap-user-microservice
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: ${USER_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${USER_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${USER_POSTGRES_DB}
+    volumes:
+      - ap-user-microservice-volume:/var/lib/postgresql/data
+    networks:
+      - akogare-platform-internal-network
   ap-microservice-a:
     image: postgres:16.3
     container_name: ap-akogare-platform-microservice-a
@@ -8,9 +22,9 @@ services:
     ports:
       - "5435:5432"
     environment:
-      POSTGRES_USER: ${PDF_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${PDF_POSTGRES_PASSWORD}
-      POSTGRES_DB: ${PDF_POSTGRES_DB}
+      POSTGRES_USER: ${ECHO_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${ECHO_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${ECHO_POSTGRES_DB}
     volumes:
       - microservicedb:/var/lib/postgresql/data
     networks:
@@ -100,4 +114,6 @@ volumes:
   pdf_rabbitmq_volume:
     driver: local
   keycloak_data:
+    driver: local
+  ap-user-microservice-volume:
     driver: local

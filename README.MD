@@ -14,7 +14,7 @@ To integrate WebSocket communication in your Angular application and connect thr
 First, you need to install the `@stomp/stompjs` and `sockjs-client` libraries.
 
 ```bash
-npm install @stomp/stompjs sockjs-client
+  npm install @stomp/stompjs sockjs-client
 ```
 ### Keycloak
 
