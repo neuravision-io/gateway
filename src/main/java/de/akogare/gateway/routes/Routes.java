@@ -38,8 +38,8 @@ public class Routes {
                         .filters(f -> f.rewritePath("/aggregate/user-webservice/v3/api-docs", "/api-docs"))
                         .uri("lb://user-webservice"))
                 /*websocket route*/
-/*            .route("pdf_analyzer_service", r -> r.path("/ws/**")
-                    .uri("lb://pdf-analyzer-webservice"))*/
+            .route("websocket-webservice", r -> r.path("/ws/**")
+                    .uri("lb://websocket-webservice"))
                 .build();
     }
 
