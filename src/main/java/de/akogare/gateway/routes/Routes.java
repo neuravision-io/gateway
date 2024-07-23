@@ -3,17 +3,43 @@ package de.akogare.gateway.routes;
 import java.time.LocalDateTime;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cloud.gateway.route.RouteLocator;
 import org.springframework.cloud.gateway.route.builder.RouteLocatorBuilder;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.server.reactive.ServerHttpRequest;
+import org.springframework.security.oauth2.core.DelegatingOAuth2TokenValidator;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.*;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Mono;
 
 @Configuration
 public class Routes {
   private static final Logger logger = LoggerFactory.getLogger(Routes.class);
 
+  @Value("${spring.security.oauth2.resourceserver.jwt.issuer-uri}")
+  String issuerUri;
+
   @Bean
-  public RouteLocator customRouteLocator(RouteLocatorBuilder builder) {
+  public JwtDecoder customJwtDecoder() {
+    NimbusJwtDecoder jwtDecoder = JwtDecoders.fromOidcIssuerLocation(issuerUri);
+
+    OAuth2TokenValidator<Jwt> withIssuer = JwtValidators.createDefaultWithIssuer(issuerUri);
+    OAuth2TokenValidator<Jwt> withTimestamp = new JwtTimestampValidator();
+
+    OAuth2TokenValidator<Jwt> validator =
+        new DelegatingOAuth2TokenValidator<>(withIssuer, withTimestamp);
+    jwtDecoder.setJwtValidator(validator);
+
+    return jwtDecoder;
+  }
+
+  @Bean
+  public RouteLocator customRouteLocator(RouteLocatorBuilder builder, JwtDecoder jwtDecoder) {
     return builder
         .routes()
         .route(
@@ -25,6 +51,25 @@ public class Routes {
                             f.addResponseHeader("X-Response-Time", LocalDateTime.now().toString())
                                 .filter(
                                     (exchange, chain) -> {
+                                      ServerHttpRequest request = exchange.getRequest();
+                                      String token =
+                                          request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+                                      if (token != null && token.startsWith("Bearer ")) {
+                                        String jwtToken = token.substring(7);
+                                        try {
+                                          Jwt jwt = jwtDecoder.decode(jwtToken);
+                                          String userId = jwt.getSubject();
+                                          ServerHttpRequest modifiedRequest =
+                                              request.mutate().header("X-User-ID", userId).build();
+                                          return chain.filter(
+                                              exchange.mutate().request(modifiedRequest).build());
+                                        } catch (Exception e) {
+                                          // Handle JWT decoding error
+                                          return Mono.error(
+                                              new ResponseStatusException(
+                                                  HttpStatus.UNAUTHORIZED, "Invalid token"));
+                                        }
+                                      }
                                       return chain.filter(exchange);
                                     }))
                     .uri("lb://echo-webservice"))
@@ -49,6 +94,25 @@ public class Routes {
                             f.addResponseHeader("X-Response-Time", LocalDateTime.now().toString())
                                 .filter(
                                     (exchange, chain) -> {
+                                      ServerHttpRequest request = exchange.getRequest();
+                                      String token =
+                                          request.getHeaders().getFirst(HttpHeaders.AUTHORIZATION);
+                                      if (token != null && token.startsWith("Bearer ")) {
+                                        String jwtToken = token.substring(7);
+                                        try {
+                                          Jwt jwt = jwtDecoder.decode(jwtToken);
+                                          String userId = jwt.getSubject();
+                                          ServerHttpRequest modifiedRequest =
+                                              request.mutate().header("X-User-ID", userId).build();
+                                          return chain.filter(
+                                              exchange.mutate().request(modifiedRequest).build());
+                                        } catch (Exception e) {
+                                          // Handle JWT decoding error
+                                          return Mono.error(
+                                              new ResponseStatusException(
+                                                  HttpStatus.UNAUTHORIZED, "Invalid token"));
+                                        }
+                                      }
                                       return chain.filter(exchange);
                                     }))
                     .uri("lb://document-webservice"))
