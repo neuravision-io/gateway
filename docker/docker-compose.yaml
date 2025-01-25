@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   ap-upload-microservice:
-    image: postgres:16.3
+    image: postgres:17.2
     container_name: ap-upload-microservice
     hostname: ap-upload-microservice
     ports:
@@ -16,7 +16,7 @@ services:
     networks:
       - akogare-platform-internal-network
   ap-user-microservice:
-    image: postgres:16.3
+    image: postgres:17.2
     container_name: ap-user-microservice
     hostname: ap-user-microservice
     ports:
@@ -104,7 +104,7 @@ services:
         condition: service_healthy
 
   ap-rabbitmq:
-    image: rabbitmq:3.13.3-management
+    image: rabbitmq:4.0.5-management
     hostname: ap-rabbitmq
     restart: always
     container_name: ap-rabbitmq
